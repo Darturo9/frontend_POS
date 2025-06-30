@@ -2,6 +2,7 @@
 import { useStore } from "@/src/store"
 import ShoppingCartItem from "./ShoppingCartItem"
 import Amount from "./Amount"
+import CouponForm from "./CouponForm"
 
 export default function ShopingCart() {
 
@@ -33,6 +34,8 @@ export default function ShopingCart() {
 
             />
           </dl>
+
+          <CouponForm/>
         </>
       ) : (
         <p className="text-xl text-center text-gray-900">El carrito esta vacio.</p>

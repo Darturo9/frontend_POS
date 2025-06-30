@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { Product, ShoppingCart } from "./schemas";
 
+
 interface Store {
     total: number
     contents: ShoppingCart
@@ -9,6 +10,7 @@ interface Store {
     updateQuantity: (id: Product['id'], quantity: number) => void
     removeFromCart: (id: Product['id']) => void
     calculateTotal: () => void
+    applyCoupon: (couponName : string) => Promise<void>
 }
 
 export const useStore = create<Store>()(devtools((set, get) => ({
@@ -60,5 +62,8 @@ export const useStore = create<Store>()(devtools((set, get) => ({
         set(() => ({
             total
         }))
+    },
+    applyCoupon: async (couponName) => {
+        console.log(couponName)
     }
 })))

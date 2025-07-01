@@ -5,6 +5,7 @@ import { Coupon, CouponResponseSchema, Product, ShoppingCart } from "./schemas";
 
 interface Store {
     total: number
+    discount: number
     contents: ShoppingCart
     coupon: Coupon
     addToCart: (product: Product) => void
@@ -12,16 +13,23 @@ interface Store {
     removeFromCart: (id: Product['id']) => void
     calculateTotal: () => void
     applyCoupon: (couponName: string) => Promise<void>
+    applyDiscount: () => void
+    clearOrder: () => void
 }
 
-export const useStore = create<Store>()(devtools((set, get) => ({
+const initialState = {
     total: 0,
+    discount: 0,
     contents: [],
     coupon: {
-        percetage: 0,
+        percentage: 0, // antes: percetage
         name: '',
         message: ''
     },
+}
+
+export const useStore = create<Store>()(devtools((set, get) => ({
+    ...initialState,
     addToCart: (product) => {
 
         const { id: productId, categoryId, ...data } = product
@@ -61,6 +69,10 @@ export const useStore = create<Store>()(devtools((set, get) => ({
         set((state) => ({
             contents: state.contents.filter(item => item.productId !== id)
         }))
+        if (!get().contents.length) {
+            get().clearOrder()
+        }
+
         get().calculateTotal()
     },
     calculateTotal: () => {
@@ -68,6 +80,10 @@ export const useStore = create<Store>()(devtools((set, get) => ({
         set(() => ({
             total
         }))
+
+        if (get().coupon.percentage) { // antes: percetage
+            get().applyDiscount()
+        }
     },
     applyCoupon: async (couponName) => {
         const req = await fetch('/coupons/api', {
@@ -77,9 +93,33 @@ export const useStore = create<Store>()(devtools((set, get) => ({
             })
         })
         const json = await req.json()
+        console.log("Cupón recibido del backend:", json) // <-- Agrega este log
         const coupon = CouponResponseSchema.parse(json)
         set(() => ({
             coupon
         }))
+
+        if (coupon.percentage) { // antes: percetage
+            get().applyDiscount()
+
+        }
+    },
+    applyDiscount: () => {
+        const subtotalAmount = get().contents.reduce((total, item) => total + (item.quantity * item.price), 0)
+        const discount = (get().coupon.percentage / 100) * subtotalAmount // antes: percetage
+        const total = subtotalAmount - discount
+
+        set(() => ({
+            discount,
+            total
+        }))
+
+    },
+    clearOrder: () => {
+        set(() => ({
+            ...initialState
+        }))
+
     }
+
 })))
